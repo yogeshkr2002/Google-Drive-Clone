@@ -125,6 +125,9 @@
   .caption {
     @apply text-[12px] leading-[16px] font-normal;
   }
+  .sidebar-email {
+    @apply text-[10px] leading-[14px] font-normal;
+  }
   .overline {
     @apply text-[10px] leading-[14px] font-normal;
   }
