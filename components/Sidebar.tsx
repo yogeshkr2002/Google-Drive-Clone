@@ -37,7 +37,7 @@ const Sidebar = ({ fullName, email, avatar }: Props) => {
       </Link>
 
       <nav className="sidebar-nav">
-        <ul className="flex flex-1 flex-col gap-2">
+        <ul className="flex flex-1 flex-col ">
           {navItems.map(({ url, name, icon }) => (
             <Link key={name} href={url} className="lg:w-full">
               <li
