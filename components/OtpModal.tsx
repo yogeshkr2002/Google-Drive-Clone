@@ -35,19 +35,44 @@ const OtpModal = ({
 
   const router = useRouter();
 
+  // const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+
+  //   try {
+  //     //Call API to verify
+  //     // console.log("OTP verified Successfully");
+  //     const sessionId = await verifySecret({ accountId, password });
+  //     console.log({ sessionId });
+
+  //     if (sessionId) {
+  //       console.log("sessionnnnn", sessionId, { sessionId });
+  //       router.push("/");
+  //     }
+  //   } catch (error) {
+  //     console.log("Failed to verify OTP", error);
+  //   }
+
+  //   setIsLoading(false);
+  // };
+
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      //Call API to verify
+      // Call API to verify
       // console.log("OTP verified Successfully");
       const sessionId = await verifySecret({ accountId, password });
       console.log({ sessionId });
 
       if (sessionId) {
         console.log("sessionnnnn", sessionId, { sessionId });
-        router.push("/");
+
+        // Highlighted: Delay router.push action by 3 seconds
+        setTimeout(() => {
+          router.push("/");
+        }, 3000); // 3000 milliseconds = 3 seconds
       }
     } catch (error) {
       console.log("Failed to verify OTP", error);
