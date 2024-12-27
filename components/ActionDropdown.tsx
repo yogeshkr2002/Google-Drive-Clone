@@ -4,11 +4,9 @@ import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -49,6 +47,7 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
     setAction(null);
     setName(file.name);
     setEmails([]);
+    // window.location.reload();
   };
 
   const handleAction = async () => {
@@ -69,6 +68,7 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
     if (success) closeAllModals();
 
     setIsLoading(false);
+    // window.location.reload();
   };
 
   const handleRemoveUser = async (email: string) => {

@@ -61,7 +61,13 @@ export const uploadFile = async ({
   }
 };
 
-const createQueries = (currentUser: Models.Document) => {
+const createQueries = (
+  currentUser: Models.Document,
+  types: string[],
+  searchText: string,
+  sort: string,
+  limit?: number
+) => {
   const queries = [
     Query.or([
       Query.equal("owner", [currentUser.$id]),
@@ -69,31 +75,38 @@ const createQueries = (currentUser: Models.Document) => {
     ]),
   ];
 
-  // TODO: search ,sort,limits ...
+  if (types.length > 0) queries.push(Query.equal("type", types));
+  if (searchText) queries.push(Query.contains("name", searchText));
+  if (limit) queries.push(Query.limit(limit));
 
+  if (sort) {
+    const [sortBy, orderBy] = sort.split("-");
+    queries.push(
+      orderBy === "asc" ? Query.orderAsc(sortBy) : Query.orderDesc(sortBy)
+    );
+  }
   return queries;
 };
 
-export const getFiles = async () => {
+export const getFiles = async ({
+  types = [],
+  searchText = "",
+  sort = "$createdAt-desc",
+  limit,
+}: GetFilesProps) => {
   const { databases } = await createAdminClient();
   try {
     const currentUser = await getCurrentUser();
 
-    // console.log("Current User:", currentUser);
-
     if (!currentUser) throw new Error("User not found");
 
-    const queries = createQueries(currentUser);
-
-    // console.log("Queries : ", queries);
+    const queries = createQueries(currentUser, types, searchText, sort, limit);
 
     const files = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.filesCollectionId,
       queries
     );
-
-    // console.log("Files :", files);
 
     return parseStringify(files);
   } catch (error) {
@@ -189,6 +202,10 @@ export async function getTotalSpaceUsed() {
       [Query.equal("owner", [currentUser.$id])]
     );
 
+    if (!files.documents || !Array.isArray(files.documents)) {
+      throw new Error("Invalid files response or no files found.");
+    }
+
     const totalSpace = {
       image: { size: 0, latestDate: "" },
       document: { size: 0, latestDate: "" },
@@ -196,17 +213,30 @@ export async function getTotalSpaceUsed() {
       audio: { size: 0, latestDate: "" },
       other: { size: 0, latestDate: "" },
       used: 0,
-      all: 2 * 1024 * 1024 * 1024 /* 2GB available bucket storage */,
+      all: 2 * 1024 * 1024 * 1024, // 2GB available bucket storage
     };
 
     files.documents.forEach((file) => {
+      if (!file.size || !file.type) {
+        console.warn("Skipping file with missing size or type:", file);
+        return;
+      }
+
       const fileType = file.type as FileType;
+      if (!totalSpace[fileType]) {
+        console.warn("Unexpected file type:", fileType);
+        totalSpace.other.size += file.size;
+        totalSpace.used += file.size;
+        return;
+      }
+
       totalSpace[fileType].size += file.size;
       totalSpace.used += file.size;
 
+      const updatedAt = new Date(file.$updatedAt);
       if (
         !totalSpace[fileType].latestDate ||
-        new Date(file.$updatedAt) > new Date(totalSpace[fileType].latestDate)
+        updatedAt > new Date(totalSpace[fileType].latestDate)
       ) {
         totalSpace[fileType].latestDate = file.$updatedAt;
       }
@@ -214,6 +244,7 @@ export async function getTotalSpaceUsed() {
 
     return parseStringify(totalSpace);
   } catch (error) {
-    handleError(error, "Error calculating total space used:, ");
+    handleError(error, "Error calculating total space used: ");
+    return null; // Optionally return null or throw to propagate the error.
   }
 }
